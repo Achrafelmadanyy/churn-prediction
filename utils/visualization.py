@@ -1,3 +1,7 @@
+import matplotlib
+
+# This module generates files for the training pipeline; it should not open Tk windows.
+matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import seaborn as sns
 import numpy as np
@@ -29,7 +33,7 @@ def plot_roc_curves(predictions_dict, y_true, save_name='roc_curves.png'):
     save_path = PLOTS_DIR / save_name
     plt.savefig(save_path, dpi=FIGURE_DPI, bbox_inches='tight')
     print(f"✓ Saved: {save_path}")
-    plt.show()
+    plt.close()
 
 def plot_performance_comparison(results_df, save_name='performance_comparison.png'):
     """Plot performance metrics comparison."""
@@ -64,7 +68,7 @@ def plot_performance_comparison(results_df, save_name='performance_comparison.pn
     save_path = PLOTS_DIR / save_name
     plt.savefig(save_path, dpi=FIGURE_DPI, bbox_inches='tight')
     print(f"✓ Saved: {save_path}")
-    plt.show()
+    plt.close()
 
 def plot_confusion_matrices(predictions_dict, y_true, thresholds=None, save_name='confusion_matrices.png'):
     """Plot confusion matrices for all models."""
@@ -98,7 +102,7 @@ def plot_confusion_matrices(predictions_dict, y_true, thresholds=None, save_name
     save_path = PLOTS_DIR / save_name
     plt.savefig(save_path, dpi=FIGURE_DPI, bbox_inches='tight')
     print(f"✓ Saved: {save_path}")
-    plt.show()
+    plt.close()
 
 def plot_threshold_optimization(thresholds, scores, optimal_threshold, metric='F1', save_name='threshold_optimization.png'):
     """Plot threshold optimization curve."""
@@ -118,7 +122,7 @@ def plot_threshold_optimization(thresholds, scores, optimal_threshold, metric='F
     save_path = PLOTS_DIR / save_name
     plt.savefig(save_path, dpi=FIGURE_DPI, bbox_inches='tight')
     print(f"✓ Saved: {save_path}")
-    plt.show()
+    plt.close()
 
 def plot_feature_importance(feature_names, importances, model_name='Model', top_n=20, save_name='feature_importance.png'):
     """Plot feature importance."""
@@ -142,7 +146,7 @@ def plot_feature_importance(feature_names, importances, model_name='Model', top_
     save_path = PLOTS_DIR / save_name
     plt.savefig(save_path, dpi=FIGURE_DPI, bbox_inches='tight')
     print(f"✓ Saved: {save_path}")
-    plt.show()
+    plt.close()
 
 def plot_cv_results(cv_results, model_name='Model', save_name='cv_results.png'):
     """Plot cross-validation results."""
@@ -185,4 +189,4 @@ def plot_cv_results(cv_results, model_name='Model', save_name='cv_results.png'):
     save_path = PLOTS_DIR / save_name
     plt.savefig(save_path, dpi=FIGURE_DPI, bbox_inches='tight')
     print(f"✓ Saved: {save_path}")
-    plt.show()
+    plt.close()
