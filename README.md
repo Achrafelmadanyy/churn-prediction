@@ -431,10 +431,10 @@ LightGBM optimizes the same second-order objective as XGBoost; the differences a
 
 | Feature | Mathematical content |
 |---|---|
-| Histogram binning | each feature is discretized into `max_bin` (255) bins; the gains of §5.6 are evaluated from cumulated $(G,H)$ per bin, so split search costs $O(\#\text{bins})$ per feature instead of $O(n)$ |
+| Histogram binning | each feature is discretized into `max_bin` (255) bins; the gains of §5.6 are evaluated from cumulated $(G,H)$ per bin. If $B$ is the number of bins, split search costs $O(B)$ per feature instead of $O(n)$ |
 | Subtraction trick | the histogram of a child equals parent minus sibling, so only the smaller child needs to be computed |
 | Leaf-wise growth | at each step, split the leaf with the largest Gain anywhere in the tree (instead of all leaves of one level); for the same number of leaves the training loss decreases faster, but trees can become deep and asymmetric, hence higher overfitting risk |
-| `num_leaves`, `min_child_samples` | the real capacity controls: number of leaves (keep $\le 2^{\text{max\_depth}}$) and minimum samples per leaf |
+| `num_leaves`, `min_child_samples` | the real capacity controls: number of leaves $L$ (keep $L \le 2^D$, where $D$ is the maximum depth) and minimum samples per leaf |
 
 ### 5.8 Neural Network
 
