@@ -1,9 +1,3 @@
-#!/usr/bin/env python3
-"""
-Main training script for churn prediction models.
-This script trains all models with default parameters and evaluates them.
-"""
-
 import pandas as pd
 import numpy as np
 import pickle

@@ -1,9 +1,3 @@
-#!/usr/bin/env python3
-"""
-Hyperparameter optimization script for all models.
-This script performs extensive hyperparameter tuning and saves the best configurations.
-"""
-
 import pandas as pd
 import numpy as np
 import pickle

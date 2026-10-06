@@ -1,9 +1,3 @@
-#!/usr/bin/env python3
-"""
-Evaluation script for saved models.
-Load pre-trained models and evaluate them on new data or generate reports.
-"""
-
 import pandas as pd
 import numpy as np
 import pickle
