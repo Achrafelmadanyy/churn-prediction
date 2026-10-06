@@ -1,6 +1,7 @@
 import torch
 import torch.nn as nn
 import torch.optim as optim
+from copy import deepcopy
 from torch.utils.data import DataLoader, TensorDataset
 import numpy as np
 from sklearn.metrics import roc_auc_score
@@ -120,7 +121,7 @@ def train_pytorch_model(X_train, y_train, X_val, y_val,
         if val_auc > best_val_auc:
             best_val_auc = val_auc
             patience_counter = 0
-            best_model_state = model.state_dict().copy()
+            best_model_state = deepcopy(model.state_dict())
         else:
             patience_counter += 1
             

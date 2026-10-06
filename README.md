@@ -758,6 +758,18 @@ python optimize.py               # random / grid search with cross-validation
 python evaluate.py [--optimized] # reload saved models and regenerate reports
 ```
 
+On Windows with an NVIDIA GPU, install the CUDA-enabled PyTorch wheels after the
+requirements so the neural network can use CUDA (the training code selects CUDA
+automatically when it is available):
+
+```bash
+pip install --index-url https://download.pytorch.org/whl/cu130 torch==2.10.0 torchvision==0.25.0
+```
+
+XGBoost also selects CUDA automatically when available. The standard LightGBM
+wheel used by this project is CPU-only; GPU LightGBM requires a separately
+compiled GPU-enabled build.
+
 Random seed fixed to 42 throughout (split, models, cross-validation, random search). `vectorizer.pkl` and `scaler.pkl` must be used to transform any new data exactly as during training.
 
 Further reading:

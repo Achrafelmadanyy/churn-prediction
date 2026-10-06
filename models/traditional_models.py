@@ -7,6 +7,14 @@ import lightgbm as lgb
 import numpy as np
 from config import HYPERPARAMETER_GRIDS, CV_FOLDS, CV_SCORING, N_JOBS, RANDOM_STATE
 
+def _xgboost_device():
+    """Use CUDA for XGBoost when the installed PyTorch build detects a GPU."""
+    try:
+        import torch
+        return 'cuda' if torch.cuda.is_available() else 'cpu'
+    except ImportError:
+        return 'cpu'
+
 def train_all_traditional_models(X_train, y_train, verbose=True):
     """Train all traditional ML models with default parameters."""
     
@@ -59,7 +67,8 @@ def train_all_traditional_models(X_train, y_train, verbose=True):
     if verbose:
         print("Training XGBoost...")
     xgb_model = xgb.XGBClassifier(n_estimators=100, learning_rate=0.1, max_depth=5, 
-                                  random_state=RANDOM_STATE, eval_metric='logloss', n_jobs=N_JOBS)
+                                  random_state=RANDOM_STATE, eval_metric='logloss', n_jobs=N_JOBS,
+                                  tree_method='hist', device=_xgboost_device())
     xgb_model.fit(X_train, y_train)
     models['XGBoost'] = xgb_model
     if verbose:
@@ -95,7 +104,10 @@ def optimize_traditional_model(model_name, X_train, y_train, n_iter=20, verbose=
     elif model_name == 'GradientBoosting':
         base_model = GradientBoostingClassifier(random_state=RANDOM_STATE)
     elif model_name == 'XGBoost':
-        base_model = xgb.XGBClassifier(random_state=RANDOM_STATE, eval_metric='logloss', n_jobs=N_JOBS)
+        base_model = xgb.XGBClassifier(
+            random_state=RANDOM_STATE, eval_metric='logloss', n_jobs=N_JOBS,
+            tree_method='hist', device=_xgboost_device()
+        )
     elif model_name == 'LightGBM':
         base_model = lgb.LGBMClassifier(random_state=RANDOM_STATE, verbose=-1, n_jobs=N_JOBS)
     else:
@@ -127,8 +139,10 @@ def optimize_traditional_model(model_name, X_train, y_train, n_iter=20, verbose=
             n_iter=n_iter,
             cv=StratifiedKFold(n_splits=CV_FOLDS, shuffle=True, random_state=RANDOM_STATE),
             scoring=CV_SCORING,
-            n_jobs=N_JOBS,
+            # Avoid multiple folds competing for the same GPU.
+            n_jobs=1 if model_name == 'XGBoost' and _xgboost_device() == 'cuda' else N_JOBS,
             random_state=RANDOM_STATE,
+            return_train_score=True,
             verbose=1 if verbose else 0
         )
     else:
@@ -141,6 +155,7 @@ def optimize_traditional_model(model_name, X_train, y_train, n_iter=20, verbose=
             cv=StratifiedKFold(n_splits=CV_FOLDS, shuffle=True, random_state=RANDOM_STATE),
             scoring=CV_SCORING,
             n_jobs=N_JOBS,
+            return_train_score=True,
             verbose=1 if verbose else 0
         )
     

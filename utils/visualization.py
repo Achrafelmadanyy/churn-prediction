@@ -162,15 +162,23 @@ def plot_cv_results(cv_results, model_name='Model', save_name='cv_results.png'):
     ax1.set_title(f'Top 10 Configurations - {model_name}', fontsize=14, fontweight='bold')
     ax1.grid(True, alpha=0.3, axis='x')
     
-    # Plot 2: Train vs Test scores
-    ax2.scatter(df['mean_train_score'], df['mean_test_score'], s=100, alpha=0.6, color='coral', edgecolor='black')
-    ax2.plot([df['mean_train_score'].min(), df['mean_train_score'].max()],
-            [df['mean_train_score'].min(), df['mean_train_score'].max()],
-            'k--', linewidth=2, label='Perfect fit')
-    ax2.set_xlabel('Mean Train Score', fontsize=12, fontweight='bold')
+    # Plot 2: Train vs Test scores (training scores are optional in sklearn results).
+    if 'mean_train_score' in df.columns:
+        ax2.scatter(df['mean_train_score'], df['mean_test_score'], s=100, alpha=0.6,
+                    color='coral', edgecolor='black')
+        score_min = min(df['mean_train_score'].min(), df['mean_test_score'].min())
+        score_max = max(df['mean_train_score'].max(), df['mean_test_score'].max())
+        ax2.plot([score_min, score_max], [score_min, score_max],
+                 'k--', linewidth=2, label='Perfect fit')
+        ax2.set_xlabel('Mean Train Score', fontsize=12, fontweight='bold')
+        ax2.set_title('Train vs Test Score', fontsize=14, fontweight='bold')
+        ax2.legend(fontsize=10)
+    else:
+        ax2.text(0.5, 0.5, 'Training scores were not included\nin these CV results',
+                 ha='center', va='center', transform=ax2.transAxes)
+        ax2.set_title('Train scores unavailable', fontsize=14, fontweight='bold')
+        ax2.set_xlabel('Enable return_train_score to show this plot', fontsize=10)
     ax2.set_ylabel('Mean Test Score', fontsize=12, fontweight='bold')
-    ax2.set_title('Train vs Test Score', fontsize=14, fontweight='bold')
-    ax2.legend(fontsize=10)
     ax2.grid(True, alpha=0.3)
     
     plt.tight_layout()
