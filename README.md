@@ -16,7 +16,7 @@ The goal of this document is not to describe the code but to explain **why each 
 6. [Model selection and hyperparameter search](#6-model-selection-and-hyperparameter-search)
 7. [Decision theory: choosing the threshold](#7-decision-theory-choosing-the-threshold)
 8. [Evaluation metrics](#8-evaluation-metrics)
-9. [Results and critical reading of the plots](#9-results-and-critical-reading-of-the-plots)
+9. [Results and critical reading of every plot](#9-results-and-critical-reading-of-every-plot)
 10. [Limitations](#10-limitations)
 11. [Reproduction and further reading](#11-reproduction-and-further-reading)
 
@@ -638,7 +638,7 @@ Differences of about 0.01 in AUC or $F_1$ between two models are **below the noi
 
 ---
 
-## 9. Results and critical reading of the plots
+## 9. Results and critical reading of every plot
 
 ### 9.1 Metrics at threshold 0.5: `results/reports/model_comparison.csv`
 
@@ -734,6 +734,53 @@ The models above use their $F_1$-optimal thresholds, which are not cost-optimal 
 - **Equal importance for complementary columns.** `paperlessbilling=yes` and `paperlessbilling=no` have the same importance (0.0102): they are complementary one-hot columns, so every split on one is equivalent to a split on the other.
 - **Known limitation of MDI.** It favors features with many possible thresholds (continuous variables) and is computed on the training data. Permutation importance (drop in validation score after shuffling a column) or Shapley values are more robust checks.
 
+### 9.6 Cross-validation search plots
+
+`optimize.py` creates one cross-validation chart for each traditional model. These figures summarize the search over hyperparameters; they are not test-set results.
+
+| Model | Plot |
+|---|---|
+| Logistic Regression | [`cv_results_logisticregression.png`](results/plots/cv_results_logisticregression.png) |
+| Decision Tree | [`cv_results_decisiontree.png`](results/plots/cv_results_decisiontree.png) |
+| Random Forest | [`cv_results_randomforest.png`](results/plots/cv_results_randomforest.png) |
+| Gradient Boosting | [`cv_results_gradientboosting.png`](results/plots/cv_results_gradientboosting.png) |
+| XGBoost | [`cv_results_xgboost.png`](results/plots/cv_results_xgboost.png) |
+| LightGBM | [`cv_results_lightgbm.png`](results/plots/cv_results_lightgbm.png) |
+
+Each chart has two panels:
+
+- **Left: top ten mean validation ROC-AUC scores.** Bars are the average across the five stratified folds; whiskers show the standard deviation across folds. A high mean with a small spread suggests more stable ranking across the folds. Overlapping whiskers are a reminder that tiny differences should not be over-interpreted.
+- **Right: training versus validation score.** A large vertical gap suggests overfitting; points near the diagonal have similar scores on the fold's training and validation portions. The chart labels rows as `Config 1`, `Config 2`, etc. after sorting, so it does not reveal the hyperparameter values for each point. The best parameters are printed by `optimize.py` when it runs.
+
+The neural network is tuned on a single validation split, not cross-validation, so it has no `cv_results_*.png` chart. Its selected architecture and settings are written to `results/reports/best_nn_config.txt`.
+
+### 9.7 Threshold-search plots
+
+`optimize.py` writes one threshold curve for each of the seven models. The curve evaluates $F_1$ at the 81 thresholds in §7.3; the dashed vertical line marks the best sampled threshold. The peak is useful for seeing how sensitive $F_1$ is to the threshold: a broad plateau is less fragile than a narrow peak. The plot does not show calibration, business cost, or uncertainty.
+
+| Model | Plot |
+|---|---|
+| Logistic Regression | [`threshold_opt_logisticregression.png`](results/plots/threshold_opt_logisticregression.png) |
+| Decision Tree | [`threshold_opt_decisiontree.png`](results/plots/threshold_opt_decisiontree.png) |
+| Random Forest | [`threshold_opt_randomforest.png`](results/plots/threshold_opt_randomforest.png) |
+| Gradient Boosting | [`threshold_opt_gradientboosting.png`](results/plots/threshold_opt_gradientboosting.png) |
+| XGBoost | [`threshold_opt_xgboost.png`](results/plots/threshold_opt_xgboost.png) |
+| LightGBM | [`threshold_opt_lightgbm.png`](results/plots/threshold_opt_lightgbm.png) |
+| Neural Network | [`threshold_opt_neural_network.png`](results/plots/threshold_opt_neural_network.png) |
+
+The same family is produced by `evaluate.py` with the `eval_threshold_` prefix, for the three models with the highest test ROC-AUC. When evaluating optimized models, pass `--optimized` to load those models. The evaluation script also writes `evaluation_roc_curves.png`, `evaluation_performance.png`, and `evaluation_confusion_matrices.png`.
+
+**Important reading rule.** The current training and optimization scripts calculate these “optimal” thresholds from `y_test`. The curves therefore describe the test set and their peak $F_1$ is optimistic; do not treat that peak as an unbiased estimate of future performance or deploy it as a validated business threshold. Select the threshold using validation or out-of-fold predictions, freeze it, then evaluate it once on test data. The same caution applies to the confusion matrices at those thresholds.
+
+### 9.8 A practical reading sequence
+
+1. Start with the ROC curves to compare ranking across thresholds (§8.3).
+2. Use the performance chart to see the standard $t=0.5$ operating point, then compare it with the threshold curves and confusion matrices to understand the precision-recall trade-off (§7–8).
+3. Use the cross-validation plots to check whether the tuned scores are stable across folds and whether the search shows a train-validation gap.
+4. Use Random Forest feature importance to identify candidate signals, then check them with domain knowledge and a validation-based method such as permutation importance. Importance is predictive association, not a causal effect.
+
+These plots answer different questions and should not be collapsed into one “best model” verdict. ROC-AUC measures ranking, a confusion matrix measures one threshold, cross-validation measures resampling stability, and feature importance describes how one fitted forest used its inputs.
+
 ---
 
 ## 10. Limitations
@@ -752,11 +799,20 @@ Each point below is a methodological issue, with its mathematical reason.
 ## 11. Reproduction and further reading
 
 ```bash
+python -m venv .venv
+# Windows PowerShell: .\.venv\Scripts\Activate.ps1
+# macOS / Linux: source .venv/bin/activate
 pip install -r requirements.txt
 python train.py                  # default hyperparameters, evaluation, plots, saves top 3 models
 python optimize.py               # random / grid search with cross-validation
-python evaluate.py [--optimized] # reload saved models and regenerate reports
+python evaluate.py               # reload baseline models and regenerate reports
+python evaluate.py --optimized   # evaluate optimized models
+python evaluate.py --no-plots    # evaluate without generating evaluation figures
 ```
+
+All generated figures are saved in `results/plots/`; summary tables and reports are saved in `results/reports/`. `train.py` trains traditional models on the 60% training split and the neural network with a separate validation split. `optimize.py` tunes traditional models by five-fold cross-validation on the 80% train-plus-validation split and tunes the neural network on its validation split. Both retain the 20% test split for reporting, although the current threshold selection uses its labels as described in §10.
+
+The feature pipeline uses all 19 predictor columns (four numeric and fifteen categorical), drops `customerID` because it is an identifier, and encodes `Churn` as the target. The CSV has 7,043 rows; `TotalCharges` contains 11 blank values that are coerced to missing values and filled with the dataset-wide mean by the current preprocessing code. As noted in §10, fitting this imputation before the split leaks information. For a sound final model, first move imputation and encoding into a train-fitted preprocessing pipeline, choose the model and threshold without using the test set, then refit the frozen pipeline and model on all available labeled rows after reporting final holdout performance. The current scripts do not yet provide that final refit step.
 
 On Windows with an NVIDIA GPU, install the CUDA-enabled PyTorch wheels after the
 requirements so the neural network can use CUDA (the training code selects CUDA
