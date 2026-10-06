@@ -1,0 +1,7 @@
+Best Neural Network Configuration:
+==================================================
+hidden_layers: [256, 128, 64, 32]
+dropout_rates: [0.4, 0.3, 0.3, 0.2]
+learning_rate: 0.005
+batch_size: 16
+weight_decay: 0.0001
